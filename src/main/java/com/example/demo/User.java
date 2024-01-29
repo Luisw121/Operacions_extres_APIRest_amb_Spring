@@ -8,18 +8,18 @@ import lombok.Data;
 
 @Entity
 @Data
-@Table(name = "usuarios")
+@Table(name = "Users")
 public class User {
     @Id
     private Integer id;
     private String email;
-    @Column(name = "fullname")
+    @Column(name = "full_name")
     private String fullName;
     private String password;
 
-    public User() {
-    }
+    public User(){
 
+    }
     public User(Integer id, String email, String full_name, String password) {
         this.id = id;
         this.email = email;

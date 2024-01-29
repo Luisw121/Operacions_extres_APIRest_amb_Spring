@@ -1,51 +1,48 @@
 package com.example.demo;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
-@Controller
+@RestController
 public class UserController {
     @Autowired
     UserService userService;
 
     public List<UserDto> getAllUsers(){
         List<User> users = userService.findAll();
-        //List<UserDto> userDtos = users.stream().map(UserDto::new).toList();
         List<UserDto> userDtos = users.stream().map(user -> new UserDto(user)).toList();
         return userDtos;
     }
 
-    public UserDto getUserById(Integer id){
-        UserDto userDto;
-        User user = userService.getUserById(id);
+    @PostMapping("/users")
+    public ResponseEntity<UserDto> addUser(@RequestBody UserDto userDto) {
+        User newUser = new User(userDto);
+        User savedUser = userService.save(newUser);
+        UserDto savedUserDto = new UserDto(savedUser);
+        return ResponseEntity.ok(savedUserDto);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    public UserDto updateUser(Integer id, UserDto userDto) {
+        User user = userService.findById(id);
+        if (user == null) {
+            return null;
+        }
+        user.setEmail(userDto.getEmail());
+        user.setFullName(userDto.getFullName());
+        user.setPassword(userDto.getPassword());
+        userService.save(user);
         return new UserDto(user);
     }
-    public User saveUser(User user){
-        return userService.saveUser(user);
-    }
 
-    public User updateUser(User user) {
-        User existingUser = userService.getUserById(user.getId());
-        if (existingUser != null) {
-            existingUser.setEmail(user.getEmail());
-            existingUser.setFullName(user.getFullName());
-            existingUser.setPassword(user.getPassword());
-            return userService.saveUser(existingUser);
-        } else {
-            throw new IllegalArgumentException("User not found with id " + user.getId());
-        }
-    }
-
-    public void deleteUser(Integer id){
-        userService.deleteUserById(id);
-    }
-/*
-    public UserDto getUserById() {
-        return null;
-    }
-
- */
 }

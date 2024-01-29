@@ -1,9 +1,10 @@
 package com.example.demo;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.fge.jsonpatch.JsonPatch;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.github.fge.jsonpatch.JsonPatchException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,66 +16,24 @@ public class UserResource {
     @Autowired
     UserController userController;
 
-    @PostMapping
-    public UserDto createUser(@RequestBody UserDto userDto) {
-        User user = new User(userDto);
-        User savedUser = userController.saveUser(user);
-        return new UserDto(savedUser);
-    }
-
-    /*
-    {
-    "id":1,
-    "email":"ejempo@ejemplo.com",
-    "fullname":"usuario",
-    "password":"password"
-}
-     */
-
     @GetMapping
     public List<UserDto> readAll(){
         return userController.getAllUsers();
     }
 
-    @GetMapping("{id}")
-    public UserDto getUser(@PathVariable Integer id){
-        return userController.getUserById(id);
-    }
-
-    @PutMapping("{id}")
-    public UserDto replaceUser(@PathVariable Integer id, @RequestBody UserDto userDto){
-        User updatedUser = userController.updateUser(new User(userDto));
-        return new UserDto(updatedUser);
-    }
-
-    @PatchMapping("{id}")
-    public UserDto updateUserPatch(@PathVariable Integer id, @RequestBody JsonPatch patch) {
-        UserDto user = userController.getUserById(id);
-        if (user == null) {
-            throw new IllegalArgumentException("User not found with id " + id);
-        }
-        try {
-            // Aplicar el parche al usuario existente
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode patched = patch.apply(objectMapper.convertValue(user, JsonNode.class));
-            User patchedUser = objectMapper.treeToValue(patched, User.class);
-            patchedUser.setId(id);
-            // Guardar el usuario actualizado
-            User updatedUser = userController.updateUser(patchedUser);
-            return new UserDto(updatedUser);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to update user with id " + id, e);
+    @PutMapping("/{id}")
+    public ResponseEntity<UserDto> update(@PathVariable Integer id, @RequestBody UserDto userDto) {
+        UserDto updatedUserDto = userController.updateUser(id, userDto);
+        if (updatedUserDto != null) {
+            return ResponseEntity.ok(updatedUserDto);
+        } else {
+            return ResponseEntity.notFound().build();
         }
     }
-
-    /*
-     [
-       { "op": "replace", "path": "/email", "value": "new-email@example.com" }
-     ]
-     */
-    @DeleteMapping("{id}")
-    public void deleteUser(@PathVariable Integer id){
-        userController.deleteUser(id);
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ResponseEntity<String> handleException(Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error: " + e.getMessage());
     }
 
 }
