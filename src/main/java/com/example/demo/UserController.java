@@ -32,7 +32,7 @@ public class UserController {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
-
+    @PatchMapping("/{id}")
     public UserDto updateUser(Integer id, UserDto userDto) {
         User user = userService.findById(id);
         if (user == null) {
