@@ -45,4 +45,15 @@ public class UserController {
         return new UserDto(user);
     }
 
+    public User updateUser(User user) {
+        User existingUser = userService.findById(user.getId());
+        if (existingUser != null) {
+            existingUser.setEmail(user.getEmail());
+            existingUser.setFullName(user.getFullName());
+            existingUser.setPassword(user.getPassword());
+            return userService.save(existingUser);
+        } else {
+            throw new IllegalArgumentException("User not found with id " + user.getId());
+        }
+    }
 }
